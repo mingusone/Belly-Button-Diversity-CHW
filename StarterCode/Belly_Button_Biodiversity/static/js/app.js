@@ -1,29 +1,80 @@
 function buildMetadata(sample) {
+  d3.json("/metadata/"+sample).then((data) => {
+    var meta_data = Object.entries(data);
+    sample_box = d3.select("#sample-metadata");
 
-  // @TODO: Complete the following function that builds the metadata panel
+    //Clear the old stuff
+    sample_box.html("");
 
-  // Use `d3.json` to fetch the metadata for a sample
-    // Use d3 to select the panel with id of `#sample-metadata`
 
-    // Use `.html("") to clear any existing metadata
-
-    // Use `Object.entries` to add each key and value pair to the panel
-    // Hint: Inside the loop, you will need to use d3 to append new
-    // tags for each key-value in the metadata.
-
-    // BONUS: Build the Gauge Chart
-    // buildGauge(data.WFREQ);
-}
+    //Select the sample box and populate it with the data
+    sample_box.data(meta_data).selectAll("p")
+      .data(meta_data)
+      .enter()
+      .append("p")
+      .text(function(d){
+        //the data is an array, d, of Key and Value
+        return d[0] + ": " + d[1];
+        })
+      .exit()
+  });
+};
 
 function buildCharts(sample) {
 
-  // @TODO: Use `d3.json` to fetch the sample data for the plots
+  //Pie Chart
+  d3.json("/samples/"+sample).then(function(d){
+    console.log(d["otu_ids"])
+    var data = [{
+      values: d["sample_values"].slice(0,10),
+      labels: d["otu_ids"].slice(0,10),
+      type: 'pie'
+    }];
 
-    // @TODO: Build a Bubble Chart using the sample data
+    var layout = {
+    };
 
-    // @TODO: Build a Pie Chart
-    // HINT: You will need to use slice() to grab the top 10 sample_values,
-    // otu_ids, and labels (10 each).
+    Plotly.newPlot('pie', data, layout);
+
+    //Bubble Chart
+
+    //We need to redo colors here real quick cause it's being all funky
+    let colors = d["otu_ids"].map(function(id){
+      return id.toString(16);
+    })
+    //When we do colors: d["otu_ids"]
+    //it comes out all redish.
+    //I'm not sure how the array of numbers being fed into plotly
+    //is interpreted but when I turn the numbers into a hexdecimal
+    //number, it comes out way prettier. So I'm going with that. 
+
+
+
+    var trace1 = {
+      x: d["otu_ids"],
+      y: d["sample_values"],
+      mode: 'markers',
+      text: d["otu_labels"],
+      marker: {
+        color: colors,
+        size: d["sample_values"]
+      }
+    };
+
+    var data = [trace1];
+
+    var layout = {
+      title: 'Belly Buttons',
+      showlegend: false
+    };
+
+    Plotly.newPlot('bubble', data, layout);
+
+
+  });
+   
+
+
 }
 
 function init() {
